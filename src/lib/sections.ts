@@ -64,7 +64,7 @@ export const defaultRsvpSettings: RsvpSettings = {
   askContact: true,
   contactRequired: false,
   askNote: true,
-  notePrompt: "Allergies, or a note for the birthday girl?",
+  notePrompt: "Allergies, or a note for the birthday kid?",
   deadline: null,
   labels: {
     going: { emoji: "🥳", text: "Going" },

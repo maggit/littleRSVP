@@ -27,7 +27,11 @@ if (devLoginEnabled) {
       id: "dev",
       name: "Dev login",
       credentials: {},
-      authorize: () => ({ id: "dev", email: process.env.DEV_LOGIN_EMAIL!, name: "Dev" }),
+      // `next dev` listens on every interface, so refuse anyone not on this machine.
+      authorize: (_credentials, request) =>
+        ["localhost", "127.0.0.1", "[::1]"].includes(new URL(request.url).hostname)
+          ? { id: "dev", email: process.env.DEV_LOGIN_EMAIL!, name: "Dev" }
+          : null,
     }),
   );
 }

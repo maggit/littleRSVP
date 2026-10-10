@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { submitRsvp, type RsvpState } from "@/app/e/[slug]/actions";
-import type { MyRsvp } from "@/lib/event";
+import { MAX_GUESTS_PER_KIND, type MyRsvp } from "@/lib/event";
 import type { RsvpSettings } from "@/lib/sections";
 
 type Status = "going" | "maybe" | "no";
@@ -18,7 +18,7 @@ function Stepper({ name, label, value, onChange, min = 0 }: { name: string; labe
       <div className="flex items-center gap-3">
         <button type="button" aria-label={`Fewer ${label.toLowerCase()}`} disabled={value <= min} onClick={() => onChange(value - 1)} className="ev-step">−</button>
         <output className="w-5 text-center font-semibold tabular-nums">{value}</output>
-        <button type="button" aria-label={`More ${label.toLowerCase()}`} disabled={value >= 20} onClick={() => onChange(value + 1)} className="ev-step">+</button>
+        <button type="button" aria-label={`More ${label.toLowerCase()}`} disabled={value >= MAX_GUESTS_PER_KIND} onClick={() => onChange(value + 1)} className="ev-step">+</button>
         <input type="hidden" name={name} value={value} />
       </div>
     </div>

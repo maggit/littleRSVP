@@ -264,7 +264,7 @@ export function EventEditor({ id, event, summary, origin }: { id: string; event:
                 />
               )}
             </Field>
-            <Field label="Page link" hint="Share this with your guests.">
+            <Field label="Page link" hint="Share this with your guests. Anyone with the link can see the page, so avoid links that are easy to guess.">
               {(fid) => (
                 <div className="flex items-center rounded-2xl border border-line bg-paper/60 focus-within:border-rose-deep">
                   <span className="pl-3.5 text-sm whitespace-nowrap text-ink-soft">/e/</span>

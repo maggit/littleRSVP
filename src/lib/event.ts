@@ -1,6 +1,9 @@
 import type { EventRow } from "@/db/schema";
 import type { RsvpSettings, Section } from "./sections";
 
+/** Most adults (and, separately, kids) one RSVP can bring. */
+export const MAX_GUESTS_PER_KIND = 10;
+
 /** Serializable event shape shared by the public page, the editor preview, and server code. */
 export type EventView = {
   id: string;

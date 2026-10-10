@@ -23,3 +23,16 @@ export async function toShareImage(input: Buffer) {
   const front = await src.clone().resize(SHARE_W, SHARE_H, { fit: "inside" }).toBuffer();
   return sharp(backdrop).composite([{ input: front, gravity: "centre" }]).jpeg(jpeg).toBuffer();
 }
+
+/**
+ * Re-encode an uploaded cover on the server: proves the bytes are really an image and strips
+ * metadata (EXIF GPS from phone photos) even when the browser-side resize was skipped.
+ * Animated GIFs stay animated.
+ */
+export async function toCoverImage(input: Buffer) {
+  return sharp(input, { failOn: "none", limitInputPixels: 50_000_000, animated: true })
+    .rotate()
+    .resize(1600, 1600, { fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 86 })
+    .toBuffer();
+}

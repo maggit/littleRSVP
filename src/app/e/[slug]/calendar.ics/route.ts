@@ -2,7 +2,7 @@ import { siteOrigin } from "@/lib/origin";
 import { getEventBySlug } from "@/lib/queries";
 
 const stamp = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-const esc = (s: string) => s.replace(/[\;,]/g, (c) => `\\${c}`).replace(/\n/g, "\\n");
+const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/[;,]/g, (c) => `\\${c}`).replace(/\r?\n|\r/g, "\\n");
 
 export async function GET(_req: Request, { params }: RouteContext<"/e/[slug]/calendar.ics">) {
   const { slug } = await params;

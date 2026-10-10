@@ -7,14 +7,18 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { db } from "@/db";
 import { rsvps } from "@/db/schema";
-import { rsvpClosedReason, rsvpCookieName, toView } from "@/lib/event";
+import { MAX_GUESTS_PER_KIND, rsvpClosedReason, rsvpCookieName, toView } from "@/lib/event";
 import { getEventBySlug } from "@/lib/queries";
+import { allow, clientIp } from "@/lib/rate-limit";
 
 export type RsvpState = { ok: boolean; error?: string; at?: number };
 
 const MAX_RSVPS_PER_EVENT = 1000;
+// New RSVPs per IP: a household or shared Wi-Fi fits easily, a script doesn't.
+const NEW_PER_EVENT = { limit: 6, windowMs: 10 * 60_000 };
+const NEW_PER_SITE = { limit: 20, windowMs: 60 * 60_000 };
 
-const count = z.coerce.number().int().min(0).max(20);
+const count = z.coerce.number().int().min(0).max(MAX_GUESTS_PER_KIND);
 
 const input = z.object({
   slug: z.string().max(100),
@@ -52,6 +56,7 @@ export async function submitRsvp(_prev: RsvpState, formData: FormData): Promise<
     return { ok: false, error: "Please add a phone number or email so we can send updates." };
   }
 
+  const ip = await clientIp();
   const jar = await cookies();
   const token = jar.get(rsvpCookieName(event.id))?.value;
   const values = { name: data.name, status: data.status, adults, kids, email, phone, note: s.askNote ? data.note : "", updatedAt: new Date() };
@@ -66,6 +71,9 @@ export async function submitRsvp(_prev: RsvpState, formData: FormData): Promise<
 
     // Backstop against bots flooding the table; real guest lists are far smaller.
     if (!existing) {
+      if (!allow(`rsvp:${ip}:${event.id}`, NEW_PER_EVENT.limit, NEW_PER_EVENT.windowMs) || !allow(`rsvp:${ip}`, NEW_PER_SITE.limit, NEW_PER_SITE.windowMs)) {
+        return { error: "Too many RSVPs from this connection. Please try again in a little while." };
+      }
       const [{ n }] = await tx.select({ n: countRows() }).from(rsvps).where(eq(rsvps.eventId, event.id));
       if (n >= MAX_RSVPS_PER_EVENT) return { error: "This party isn't taking more RSVPs online. Please reach out to the host." };
     }
