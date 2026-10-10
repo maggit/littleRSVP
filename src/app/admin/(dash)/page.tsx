@@ -4,12 +4,15 @@ import { createEvent, setEventStatus } from "@/app/admin/actions";
 import { db } from "@/db";
 import { events, rsvps } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
+import type { Dict } from "@/lib/i18n";
+import { getI18n } from "@/lib/i18n/server";
 import { closeEndedEvents } from "@/lib/queries";
 import { getTheme } from "@/lib/themes";
 import { formatEventDate } from "@/lib/time";
 
 export default async function AdminHome() {
   await requireAdmin();
+  const { t } = await getI18n();
   await closeEndedEvents();
   const rows = await db
     .select({
@@ -38,18 +41,18 @@ export default async function AdminHome() {
     <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-4xl font-medium tracking-tight [font-variation-settings:'SOFT'_100,'WONK'_1] sm:text-5xl">Parties</h1>
-          <p className="mt-1 text-ink-soft">Create an invitation, share the link, watch the RSVPs roll in.</p>
+          <h1 className="font-display text-4xl font-medium tracking-tight [font-variation-settings:'SOFT'_100,'WONK'_1] sm:text-5xl">{t.dashboard.title}</h1>
+          <p className="mt-1 text-ink-soft">{t.dashboard.intro}</p>
         </div>
         <form action={createEvent}>
           <button className="rounded-full bg-rose-deep px-5 py-2.5 font-semibold whitespace-nowrap text-white shadow-sm transition hover:bg-rose active:translate-y-px">
-            + New party
+            {t.dashboard.newParty}
           </button>
         </form>
       </div>
 
-      <EventList title="Active" rows={active} empty="No active parties. Start one!" />
-      {past.length > 0 && <EventList title="Past & inactive" rows={past} />}
+      <EventList title={t.dashboard.active} rows={active} empty={t.dashboard.emptyActive} t={t} />
+      {past.length > 0 && <EventList title={t.dashboard.past} rows={past} t={t} />}
     </main>
   );
 }
@@ -69,7 +72,7 @@ type Row = {
   responses: number;
 };
 
-function EventList({ title, rows, empty }: { title: string; rows: Row[]; empty?: string }) {
+function EventList({ title, rows, empty, t }: { title: string; rows: Row[]; empty?: string; t: Dict }) {
   return (
     <section className="mb-10">
       <h2 className="mb-3 text-sm font-semibold tracking-wide text-ink-soft uppercase">{title}</h2>
@@ -78,7 +81,7 @@ function EventList({ title, rows, empty }: { title: string; rows: Row[]; empty?:
       ) : (
         <ul className="grid gap-3">
           {rows.map((r) => {
-            const date = formatEventDate(r.startsAt?.toISOString() ?? null, r.endsAt?.toISOString() ?? null, r.timezone);
+            const date = formatEventDate(r.startsAt?.toISOString() ?? null, r.endsAt?.toISOString() ?? null, r.timezone, t.locale);
             const theme = getTheme(r.theme);
             return (
               <li key={r.id} className="flex flex-wrap items-center gap-4 rounded-3xl border border-line bg-white/60 p-3 pr-4 sm:flex-nowrap">
@@ -94,16 +97,16 @@ function EventList({ title, rows, empty }: { title: string; rows: Row[]; empty?:
                   <span className="min-w-0">
                     <span className="block truncate text-lg font-semibold">{r.title}</span>
                     <span className="block truncate text-sm text-ink-soft">
-                      {date ? `${date.day} · ${date.times}` : "No date yet"} · {r.going} going · {r.responses} response{r.responses === 1 ? "" : "s"}
+                      {date ? `${date.day} · ${date.times}` : t.dashboard.noDate} · {t.dashboard.going(r.going)} · {t.dashboard.responses(r.responses)}
                     </span>
                   </span>
                 </Link>
                 <div className="flex shrink-0 items-center gap-1 text-sm font-semibold">
-                  <Link href={`/admin/events/${r.id}/rsvps`} className="rounded-full px-3 py-1.5 hover:bg-paper-2">RSVPs</Link>
-                  <a href={`/e/${r.slug}`} target="_blank" className="rounded-full px-3 py-1.5 hover:bg-paper-2">View</a>
+                  <Link href={`/admin/events/${r.id}/rsvps`} className="rounded-full px-3 py-1.5 hover:bg-paper-2">{t.dashboard.rsvps}</Link>
+                  <a href={`/e/${r.slug}`} target="_blank" className="rounded-full px-3 py-1.5 hover:bg-paper-2">{t.dashboard.view}</a>
                   <form action={setEventStatus.bind(null, r.id, r.status === "active" ? "inactive" : "active")}>
                     <button className="rounded-full px-3 py-1.5 whitespace-nowrap text-ink-soft hover:bg-paper-2 hover:text-ink">
-                      {r.status === "active" ? "Mark inactive" : "Reactivate"}
+                      {r.status === "active" ? t.dashboard.deactivate : t.dashboard.reactivate}
                     </button>
                   </form>
                 </div>

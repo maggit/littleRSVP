@@ -9,6 +9,8 @@ import { signOut } from "@/auth";
 import { db } from "@/db";
 import { events, rsvps } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
+import type { Dict } from "@/lib/i18n";
+import { getI18n, zodErrors } from "@/lib/i18n/server";
 import { pruneImages, sweepStaleImages } from "@/lib/images";
 import { defaultRsvpSettings, defaultSections, rsvpSettingsSchema, sectionSchema } from "@/lib/sections";
 import { EFFECTS, THEMES } from "@/lib/themes";
@@ -21,15 +23,17 @@ export async function logout() {
 
 export async function createEvent() {
   await requireAdmin();
+  // Starting copy is written in the current site language; after that it's the host's text.
+  const { t } = await getI18n();
   const [row] = await db
     .insert(events)
     .values({
       slug: `party-${nanoid(6).toLowerCase().replace(/[^a-z0-9]/g, "x")}`,
-      title: "Birthday Party",
-      subtitle: "Come celebrate with us! There will be cake, games, and lots of giggles.",
+      title: t.defaults.title,
+      subtitle: t.defaults.subtitle,
       hostedBy: "",
-      sections: defaultSections(),
-      rsvpSettings: defaultRsvpSettings,
+      sections: defaultSections(t),
+      rsvpSettings: defaultRsvpSettings(t),
     })
     .returning({ id: events.id });
   redirect(`/admin/events/${row.id}`);
@@ -37,8 +41,8 @@ export async function createEvent() {
 
 const localDate = z.string().max(20).nullable();
 
-const eventInput = z.object({
-  title: z.string().trim().min(1, "Give the party a name.").max(140),
+const eventInput = (t: Dict) => z.object({
+  title: z.string().trim().min(1, t.errors.title).max(140),
   badge: z.string().trim().max(60),
   tagline: z.string().trim().max(160),
   subtitle: z.string().trim().max(1000),
@@ -47,9 +51,9 @@ const eventInput = z.object({
     .string()
     .trim()
     .toLowerCase()
-    .min(2, "The page link needs at least 2 characters.")
+    .min(2, t.errors.slugShort)
     .max(80)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "The page link can only use letters, numbers and dashes."),
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, t.errors.slugChars),
   status: z.enum(["active", "inactive"]),
   startsLocal: localDate,
   endsLocal: localDate,
@@ -60,13 +64,13 @@ const eventInput = z.object({
     } catch {
       return false;
     }
-  }, "Unknown time zone."),
+  }, t.errors.timezone),
   hostedBy: z.string().trim().max(120),
   locationName: z.string().trim().max(200),
   locationAddress: z.string().trim().max(300),
   capacity: z.number().int().min(1).max(10000).nullable(),
   theme: z.enum(Object.keys(THEMES) as [string, ...string[]]),
-  effect: z.enum(Object.keys(EFFECTS) as [string, ...string[]]),
+  effect: z.enum([...EFFECTS] as [string, ...string[]]),
   titleFont: z.enum(Object.keys(TITLE_FONTS) as [string, ...string[]]),
   coverImageId: z.uuid().nullable(),
   shareImageId: z.uuid().nullable(),
@@ -75,27 +79,28 @@ const eventInput = z.object({
   rsvpSettings: rsvpSettingsSchema.extend({ deadline: localDate }),
 });
 
-export type EventInput = z.input<typeof eventInput>;
+export type EventInput = z.input<ReturnType<typeof eventInput>>;
 export type SaveResult = { ok: true; savedAt: number } | { ok: false; error: string };
 
 export async function saveEvent(id: string, input: EventInput): Promise<SaveResult> {
   await requireAdmin();
-  const parsed = eventInput.safeParse(input);
+  const { lang, t } = await getI18n();
+  const parsed = eventInput(t).safeParse(input, zodErrors(lang));
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
-    return { ok: false, error: issue ? `${issue.message}${issue.path.length ? ` (${issue.path.join(".")})` : ""}` : "Invalid data." };
+    return { ok: false, error: issue ? `${issue.message}${issue.path.length ? ` (${issue.path.join(".")})` : ""}` : t.errors.invalid };
   }
   const d = parsed.data;
   const startsAt = d.startsLocal ? zonedLocalToDate(d.startsLocal, d.timezone) : null;
   const endsAt = d.endsLocal ? zonedLocalToDate(d.endsLocal, d.timezone) : null;
-  if (startsAt && endsAt && endsAt <= startsAt) return { ok: false, error: "The party has to end after it starts." };
+  if (startsAt && endsAt && endsAt <= startsAt) return { ok: false, error: t.errors.endBeforeStart };
   const deadline = d.rsvpSettings.deadline ? zonedLocalToDate(d.rsvpSettings.deadline, d.timezone) : null;
 
   const [clash] = await db.select({ id: events.id }).from(events).where(and(eq(events.slug, d.slug), ne(events.id, id))).limit(1);
-  if (clash) return { ok: false, error: `Another event already uses /e/${d.slug}.` };
+  if (clash) return { ok: false, error: t.errors.slugTaken(d.slug) };
 
   const [before] = await db.select({ slug: events.slug, coverImageId: events.coverImageId, shareImageId: events.shareImageId }).from(events).where(eq(events.id, id)).limit(1);
-  if (!before) return { ok: false, error: "This event no longer exists." };
+  if (!before) return { ok: false, error: t.errors.gone };
 
   await db
     .update(events)
@@ -145,6 +150,7 @@ export async function setEventStatus(id: string, status: "active" | "inactive") 
 
 export async function duplicateEvent(id: string) {
   await requireAdmin();
+  const { t } = await getI18n();
   const [src] = await db.select().from(events).where(eq(events.id, id)).limit(1);
   if (!src) return;
   const [row] = await db
@@ -153,7 +159,7 @@ export async function duplicateEvent(id: string) {
       ...src,
       id: undefined,
       slug: `${src.slug.slice(0, 70)}-${nanoid(4).toLowerCase().replace(/[^a-z0-9]/g, "x")}`,
-      title: `${src.title} (copy)`,
+      title: t.defaults.copy(src.title),
       status: "active",
       startsAt: null,
       endsAt: null,

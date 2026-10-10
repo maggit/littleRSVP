@@ -10,6 +10,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { LANGS } from "@/lib/i18n";
 import type { RsvpSettings, Section } from "@/lib/sections";
 
 const bytea = customType<{ data: Buffer; driverData: Buffer }>({
@@ -85,9 +86,14 @@ export const siteSettings = pgTable(
     landingDescription: text("landing_description").notNull().default(""),
     /** Small caps text in the landing page's bottom corner. Hidden when empty. */
     landingFooter: text("landing_footer").notNull().default(""),
+    /** Language of the whole site (public pages, admin, new-party defaults). */
+    language: text("language", { enum: LANGS }).notNull().default("en"),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [check("site_settings_single_row", sql`${t.id} = 1`)],
+  (t) => [
+    check("site_settings_single_row", sql`${t.id} = 1`),
+    check("site_settings_language", sql`${t.language} in ('en', 'es')`),
+  ],
 );
 
 export type EventRow = typeof events.$inferSelect;

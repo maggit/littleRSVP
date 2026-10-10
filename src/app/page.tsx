@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { connection } from "next/server";
+import { getI18n } from "@/lib/i18n/server";
 import { getSiteSettings } from "@/lib/settings";
 import s from "./home.module.css";
 
@@ -17,6 +18,7 @@ export const viewport: Viewport = { themeColor: "#a9b4ed" };
 export default async function Home() {
   await connection();
   const { landingLine1, landingLine2, landingFooter } = await getSiteSettings();
+  const { t } = await getI18n();
   return (
     <div className={s.page}>
       <main className={s.main}>
@@ -24,7 +26,7 @@ export default async function Home() {
           <span>{landingLine1}</span>
           {landingLine2 && <span>{landingLine2}</span>}
         </h1>
-        <div className={s.character} role="img" aria-label="A friendly little cream cloud with rosy cheeks and a smile">
+        <div className={s.character} role="img" aria-label={t.landing.character}>
           <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <g className={s.face}>
               <path

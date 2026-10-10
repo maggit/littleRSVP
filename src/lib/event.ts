@@ -1,4 +1,5 @@
 import type { EventRow } from "@/db/schema";
+import type { Dict } from "./i18n";
 import type { RsvpSettings, Section } from "./sections";
 
 /** Most adults (and, separately, kids) one RSVP can bring. */
@@ -96,9 +97,9 @@ export function hasEnded(e: Pick<EventView, "startsAt" | "endsAt">, now = new Da
   return end !== null && end < now;
 }
 
-export function rsvpClosedReason(e: EventView, now = new Date()): string | null {
-  if (e.status === "inactive" || hasEnded(e, now)) return "This party has wrapped up. Thank you for celebrating with us!";
-  if (e.rsvpSettings.deadline && new Date(e.rsvpSettings.deadline) < now) return "RSVPs are closed.";
+export function rsvpClosedReason(e: EventView, t: Dict, now = new Date()): string | null {
+  if (e.status === "inactive" || hasEnded(e, now)) return t.event.wrappedUp;
+  if (e.rsvpSettings.deadline && new Date(e.rsvpSettings.deadline) < now) return t.event.rsvpsClosed;
   return null;
 }
 

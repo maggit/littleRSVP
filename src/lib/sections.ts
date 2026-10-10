@@ -1,14 +1,16 @@
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import type { Dict } from "./i18n";
 
+// Names and hints for each type are in the dictionaries (`sectionTypes`).
 export const SECTION_TYPES = {
-  details: { label: "Event details", emoji: "📍", hint: "Date, place, host and spots" },
-  text: { label: "Text", emoji: "✏️", hint: "A heading and a few paragraphs" },
-  callout: { label: "Callout", emoji: "💡", hint: "Dress code, parking, allergies…" },
-  schedule: { label: "Schedule", emoji: "⏰", hint: "What happens when" },
-  links: { label: "Links", emoji: "🔗", hint: "Registry, playlist, photos" },
-  faq: { label: "Questions", emoji: "❓", hint: "Answers to the usual questions" },
-  guests: { label: "Guest list", emoji: "👯", hint: "Who's coming" },
+  details: { emoji: "📍" },
+  text: { emoji: "✏️" },
+  callout: { emoji: "💡" },
+  schedule: { emoji: "⏰" },
+  links: { emoji: "🔗" },
+  faq: { emoji: "❓" },
+  guests: { emoji: "👯" },
 } as const;
 
 export type SectionType = keyof typeof SECTION_TYPES;
@@ -59,21 +61,25 @@ export const rsvpSettingsSchema = z.object({
 
 export type RsvpSettings = z.infer<typeof rsvpSettingsSchema>;
 
-export const defaultRsvpSettings: RsvpSettings = {
-  askCounts: true,
-  askContact: true,
-  contactRequired: false,
-  askNote: true,
-  notePrompt: "Allergies, or a note for the birthday kid?",
-  deadline: null,
-  labels: {
-    going: { emoji: "🥳", text: "Going" },
-    maybe: { emoji: "🤔", text: "Maybe" },
-    no: { emoji: "😢", text: "Can't go" },
-  },
-};
+/** Starting RSVP settings for a new party, with labels in the site language. */
+export function defaultRsvpSettings(t: Dict): RsvpSettings {
+  return {
+    askCounts: true,
+    askContact: true,
+    contactRequired: false,
+    askNote: true,
+    notePrompt: t.defaults.notePrompt,
+    deadline: null,
+    labels: {
+      going: { emoji: "🥳", text: t.defaults.labels.going },
+      maybe: { emoji: "🤔", text: t.defaults.labels.maybe },
+      no: { emoji: "😢", text: t.defaults.labels.no },
+    },
+  };
+}
 
-export function newSection(type: SectionType): Section {
+/** A new section, with starting copy in the site language. */
+export function newSection(type: SectionType, t: Dict): Section {
   const id = nanoid(10);
   switch (type) {
     case "details":
@@ -81,22 +87,22 @@ export function newSection(type: SectionType): Section {
     case "text":
       return { id, type, enabled: true, title: "", body: "" };
     case "callout":
-      return { id, type, enabled: true, emoji: "👗", title: "Dress code", body: "" };
+      return { id, type, enabled: true, emoji: "👗", title: t.defaults.callout, body: "" };
     case "schedule":
-      return { id, type, enabled: true, title: "Schedule", items: [{ time: "", label: "" }] };
+      return { id, type, enabled: true, title: t.defaults.schedule, items: [{ time: "", label: "" }] };
     case "links":
-      return { id, type, enabled: true, title: "Links", items: [{ label: "", url: "" }] };
+      return { id, type, enabled: true, title: t.defaults.links, items: [{ label: "", url: "" }] };
     case "faq":
-      return { id, type, enabled: true, title: "Good to know", items: [{ q: "", a: "" }] };
+      return { id, type, enabled: true, title: t.defaults.faq, items: [{ q: "", a: "" }] };
     case "guests":
-      return { id, type, enabled: true, title: "Who's coming" };
+      return { id, type, enabled: true, title: t.defaults.guests };
   }
 }
 
-export function defaultSections(): Section[] {
+export function defaultSections(t: Dict): Section[] {
   return [
-    newSection("details"),
-    { ...newSection("schedule"), enabled: false },
-    newSection("guests"),
+    newSection("details", t),
+    { ...newSection("schedule", t), enabled: false },
+    newSection("guests", t),
   ];
 }

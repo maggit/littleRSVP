@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { Dict } from "@/lib/i18n";
 import { SECTION_TYPES, type Section } from "@/lib/sections";
 import { Field, IconButton, Input, Switch, TextArea } from "./ui";
 
@@ -11,17 +12,18 @@ type Props = {
   onChange: (s: Section) => void;
   onMove: (dir: -1 | 1) => void;
   onRemove: () => void;
+  t: Dict;
 };
 
-function summary(s: Section) {
+function summary(s: Section, t: Dict) {
   if ("title" in s && s.title) return s.title;
-  if (s.type === "text") return s.body.slice(0, 60) || "Empty";
-  return SECTION_TYPES[s.type].hint;
+  if (s.type === "text") return s.body.slice(0, 60) || t.sectionEditor.empty;
+  return t.sectionTypes[s.type].hint;
 }
 
-export function SectionEditor({ section, index, count, onChange, onMove, onRemove }: Props) {
+export function SectionEditor({ section, index, count, onChange, onMove, onRemove, t }: Props) {
   const [open, setOpen] = useState(false);
-  const meta = SECTION_TYPES[section.type];
+  const meta = { ...SECTION_TYPES[section.type], ...t.sectionTypes[section.type] };
   const editable = section.type !== "details";
 
   return (
@@ -31,19 +33,19 @@ export function SectionEditor({ section, index, count, onChange, onMove, onRemov
           <span className="text-xl" aria-hidden>{meta.emoji}</span>
           <span className="min-w-0">
             <span className="block text-sm font-semibold">{meta.label}</span>
-            <span className="block truncate text-xs text-ink-soft">{summary(section)}</span>
+            <span className="block truncate text-xs text-ink-soft">{summary(section, t)}</span>
           </span>
         </button>
-        <IconButton label="Move up" disabled={index === 0} onClick={() => onMove(-1)}>↑</IconButton>
-        <IconButton label="Move down" disabled={index === count - 1} onClick={() => onMove(1)}>↓</IconButton>
-        <Switch checked={section.enabled} onChange={(enabled) => onChange({ ...section, enabled })} label={`Show ${meta.label}`} />
+        <IconButton label={t.sectionEditor.moveUp} disabled={index === 0} onClick={() => onMove(-1)}>↑</IconButton>
+        <IconButton label={t.sectionEditor.moveDown} disabled={index === count - 1} onClick={() => onMove(1)}>↓</IconButton>
+        <Switch checked={section.enabled} onChange={(enabled) => onChange({ ...section, enabled })} label={t.sectionEditor.show(meta.label)} />
       </div>
       {open && editable && (
         <div className="space-y-3 border-t border-line p-3">
-          <Fields section={section} onChange={onChange} />
+          <Fields section={section} onChange={onChange} t={t} />
           <div className="flex justify-end">
             <button type="button" onClick={onRemove} className="rounded-full px-3 py-1 text-xs font-semibold text-ink-soft hover:bg-rose/10 hover:text-rose-deep">
-              Remove section
+              {t.sectionEditor.remove}
             </button>
           </div>
         </div>
@@ -52,29 +54,30 @@ export function SectionEditor({ section, index, count, onChange, onMove, onRemov
   );
 }
 
-function Fields({ section: s, onChange }: { section: Section; onChange: (s: Section) => void }) {
+function Fields({ section: s, onChange, t }: { section: Section; onChange: (s: Section) => void; t: Dict }) {
+  const e = t.sectionEditor;
   switch (s.type) {
     case "details":
       return null;
     case "text":
       return (
         <>
-          <Field label="Heading" hint="Optional">{(id) => <Input id={id} value={s.title} onChange={(e) => onChange({ ...s, title: e.target.value })} />}</Field>
-          <Field label="Text" hint="Leave a blank line between paragraphs.">{(id) => <TextArea id={id} rows={5} value={s.body} onChange={(e) => onChange({ ...s, body: e.target.value })} />}</Field>
+          <Field label={e.heading} hint={e.optional}>{(id) => <Input id={id} value={s.title} onChange={(ev) => onChange({ ...s, title: ev.target.value })} />}</Field>
+          <Field label={e.text} hint={e.textHint}>{(id) => <TextArea id={id} rows={5} value={s.body} onChange={(ev) => onChange({ ...s, body: ev.target.value })} />}</Field>
         </>
       );
     case "callout":
       return (
         <>
           <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3">
-            <Field label="Emoji">{(id) => <Input id={id} value={s.emoji} maxLength={16} className="text-center text-xl" onChange={(e) => onChange({ ...s, emoji: e.target.value })} />}</Field>
-            <Field label="Heading">{(id) => <Input id={id} value={s.title} onChange={(e) => onChange({ ...s, title: e.target.value })} />}</Field>
+            <Field label={e.emoji}>{(id) => <Input id={id} value={s.emoji} maxLength={16} className="text-center text-xl" onChange={(ev) => onChange({ ...s, emoji: ev.target.value })} />}</Field>
+            <Field label={e.heading}>{(id) => <Input id={id} value={s.title} onChange={(ev) => onChange({ ...s, title: ev.target.value })} />}</Field>
           </div>
-          <Field label="Text">{(id) => <TextArea id={id} rows={3} value={s.body} onChange={(e) => onChange({ ...s, body: e.target.value })} />}</Field>
+          <Field label={e.text}>{(id) => <TextArea id={id} rows={3} value={s.body} onChange={(ev) => onChange({ ...s, body: ev.target.value })} />}</Field>
         </>
       );
     case "guests":
-      return <Field label="Heading">{(id) => <Input id={id} value={s.title} onChange={(e) => onChange({ ...s, title: e.target.value })} />}</Field>;
+      return <Field label={e.heading}>{(id) => <Input id={id} value={s.title} onChange={(ev) => onChange({ ...s, title: ev.target.value })} />}</Field>;
     case "schedule":
       return (
         <ListFields
@@ -83,11 +86,12 @@ function Fields({ section: s, onChange }: { section: Section; onChange: (s: Sect
           items={s.items}
           onItems={(items) => onChange({ ...s, items })}
           blank={{ time: "", label: "" }}
-          addLabel="Add a time"
+          addLabel={e.addTime}
+          t={t}
           render={(item, set) => (
             <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-2">
-              <Input aria-label="Time" placeholder="3:00" value={item.time} onChange={(e) => set({ ...item, time: e.target.value })} />
-              <Input aria-label="What happens" placeholder="Cake!" value={item.label} onChange={(e) => set({ ...item, label: e.target.value })} />
+              <Input aria-label={e.time} placeholder={e.timePlaceholder} value={item.time} onChange={(ev) => set({ ...item, time: ev.target.value })} />
+              <Input aria-label={e.what} placeholder={e.whatPlaceholder} value={item.label} onChange={(ev) => set({ ...item, label: ev.target.value })} />
             </div>
           )}
         />
@@ -100,11 +104,12 @@ function Fields({ section: s, onChange }: { section: Section; onChange: (s: Sect
           items={s.items}
           onItems={(items) => onChange({ ...s, items })}
           blank={{ label: "", url: "" }}
-          addLabel="Add a link"
+          addLabel={e.addLink}
+          t={t}
           render={(item, set) => (
             <div className="grid gap-2 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-              <Input aria-label="Label" placeholder="Wish list" value={item.label} onChange={(e) => set({ ...item, label: e.target.value })} />
-              <Input aria-label="URL" placeholder="https://…" inputMode="url" value={item.url} onChange={(e) => set({ ...item, url: e.target.value })} />
+              <Input aria-label={e.label} placeholder={e.labelPlaceholder} value={item.label} onChange={(ev) => set({ ...item, label: ev.target.value })} />
+              <Input aria-label={e.url} placeholder="https://…" inputMode="url" value={item.url} onChange={(ev) => set({ ...item, url: ev.target.value })} />
             </div>
           )}
         />
@@ -117,11 +122,12 @@ function Fields({ section: s, onChange }: { section: Section; onChange: (s: Sect
           items={s.items}
           onItems={(items) => onChange({ ...s, items })}
           blank={{ q: "", a: "" }}
-          addLabel="Add a question"
+          addLabel={e.addQuestion}
+          t={t}
           render={(item, set) => (
             <div className="grid gap-2">
-              <Input aria-label="Question" placeholder="Is there parking?" value={item.q} onChange={(e) => set({ ...item, q: e.target.value })} />
-              <TextArea aria-label="Answer" rows={2} className="min-h-0" placeholder="Yes, on the street." value={item.a} onChange={(e) => set({ ...item, a: e.target.value })} />
+              <Input aria-label={e.question} placeholder={e.questionPlaceholder} value={item.q} onChange={(ev) => set({ ...item, q: ev.target.value })} />
+              <TextArea aria-label={e.answer} rows={2} className="min-h-0" placeholder={e.answerPlaceholder} value={item.a} onChange={(ev) => set({ ...item, a: ev.target.value })} />
             </div>
           )}
         />
@@ -136,6 +142,7 @@ function ListFields<T>({
   onItems,
   blank,
   addLabel,
+  t,
   render,
 }: {
   title: string;
@@ -144,16 +151,17 @@ function ListFields<T>({
   onItems: (items: T[]) => void;
   blank: T;
   addLabel: string;
+  t: Dict;
   render: (item: T, set: (item: T) => void) => React.ReactNode;
 }) {
   return (
     <>
-      <Field label="Heading">{(id) => <Input id={id} value={title} onChange={(e) => onTitle(e.target.value)} />}</Field>
+      <Field label={t.sectionEditor.heading}>{(id) => <Input id={id} value={title} onChange={(e) => onTitle(e.target.value)} />}</Field>
       <ul className="space-y-2">
         {items.map((item, i) => (
           <li key={i} className="flex items-start gap-1">
             <div className="min-w-0 flex-1">{render(item, (next) => onItems(items.map((x, j) => (j === i ? next : x))))}</div>
-            <IconButton label="Remove" className="mt-1.5" onClick={() => onItems(items.filter((_, j) => j !== i))}>×</IconButton>
+            <IconButton label={t.sectionEditor.removeItem} className="mt-1.5" onClick={() => onItems(items.filter((_, j) => j !== i))}>×</IconButton>
           </li>
         ))}
       </ul>

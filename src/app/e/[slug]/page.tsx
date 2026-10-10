@@ -6,6 +6,7 @@ import { RsvpCard } from "@/components/event/RsvpCard";
 import { db } from "@/db";
 import { rsvps } from "@/db/schema";
 import { rsvpClosedReason, rsvpCookieName, toView, type MyRsvp } from "@/lib/event";
+import { getI18n } from "@/lib/i18n/server";
 import { closeEndedEvents, getEventBySlug, guestSummary } from "@/lib/queries";
 import { siteOrigin } from "@/lib/origin";
 import { formatEventDate } from "@/lib/time";
@@ -13,11 +14,12 @@ import { and, eq } from "drizzle-orm";
 
 export async function generateMetadata({ params }: PageProps<"/e/[slug]">): Promise<Metadata> {
   const { slug } = await params;
+  const { t } = await getI18n();
   const row = await getEventBySlug(slug);
   if (!row) return {};
   const e = toView(row);
-  const date = formatEventDate(e.startsAt, e.endsAt, e.timezone);
-  const description = [date && `${date.day}, ${date.times}`, e.locationName].filter(Boolean).join(" · ") || "You're invited!";
+  const date = formatEventDate(e.startsAt, e.endsAt, e.timezone, t.locale);
+  const description = [date && `${date.day}, ${date.times}`, e.locationName].filter(Boolean).join(" · ") || t.meta.invited;
   // Link previews only get an image when one was uploaded for that purpose. og:image must be an
   // absolute URL, and the 1200x630 size lets WhatsApp and iMessage draw the large card.
   const image = e.shareImageId
@@ -35,6 +37,7 @@ export async function generateMetadata({ params }: PageProps<"/e/[slug]">): Prom
 
 export default async function EventRoute({ params }: PageProps<"/e/[slug]">) {
   const { slug } = await params;
+  const { lang, t } = await getI18n();
   await closeEndedEvents();
   const row = await getEventBySlug(slug);
   if (!row) notFound();
@@ -49,13 +52,14 @@ export default async function EventRoute({ params }: PageProps<"/e/[slug]">) {
         .limit(1)
     : [];
   const summary = await guestSummary(event.id);
-  const closedReason = rsvpClosedReason(event);
+  const closedReason = rsvpClosedReason(event, t);
 
   return (
     <EventPage
       event={event}
       summary={summary}
-      rsvp={<RsvpCard slug={event.slug} settings={event.rsvpSettings} mine={(mine as MyRsvp) ?? null} closedReason={closedReason} />}
+      lang={lang}
+      rsvp={<RsvpCard slug={event.slug} settings={event.rsvpSettings} mine={(mine as MyRsvp) ?? null} closedReason={closedReason} lang={lang} />}
     />
   );
 }

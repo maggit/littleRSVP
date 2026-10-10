@@ -1,11 +1,17 @@
 import type { Metadata, Viewport } from "next";
+import { getI18n } from "@/lib/i18n/server";
 import { fontVariables } from "@/lib/fonts";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: { default: "Little RSVP", template: "%s · Little RSVP" },
-  description: "Little party invitations and RSVPs.",
-};
+// The language comes from /admin/settings, so every page renders per request (getI18n waits for
+// one, which also keeps the database out of `next build`).
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return {
+    title: { default: "Little RSVP", template: "%s · Little RSVP" },
+    description: t.meta.description,
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: [
@@ -14,9 +20,10 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const { lang } = await getI18n();
   return (
-    <html lang="en" className={`${fontVariables} antialiased`}>
+    <html lang={lang} className={`${fontVariables} antialiased`}>
       <body>{children}</body>
     </html>
   );

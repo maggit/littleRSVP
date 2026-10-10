@@ -1,5 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import { type EventView, type GuestSummary } from "@/lib/event";
+import { getDict, type Lang } from "@/lib/i18n";
 import { getTheme, themeStyle } from "@/lib/themes";
 import { formatEventDate } from "@/lib/time";
 import { getTitleFont } from "@/lib/title-fonts";
@@ -16,6 +17,7 @@ function splitTitle(title: string): [string, string] {
 export function EventPage({
   event,
   summary,
+  lang,
   rsvp,
   banner,
   coverSrc,
@@ -23,6 +25,8 @@ export function EventPage({
 }: {
   event: EventView;
   summary: GuestSummary;
+  /** Site language (this also renders inside the client-side editor preview). */
+  lang: Lang;
   /** The RSVP card (a client component on the live page, a disabled copy in the editor preview). */
   rsvp: ReactNode;
   banner?: ReactNode;
@@ -30,10 +34,11 @@ export function EventPage({
   /** Render inside a scrolling preview pane rather than the full viewport. */
   contained?: boolean;
 }) {
+  const t = getDict(lang);
   const theme = getTheme(event.theme);
   const font = getTitleFont(event.titleFont);
-  const date = formatEventDate(event.startsAt, event.endsAt, event.timezone);
-  const [line1, line2] = splitTitle(event.title || "Untitled party");
+  const date = formatEventDate(event.startsAt, event.endsAt, event.timezone, t.locale);
+  const [line1, line2] = splitTitle(event.title || t.event.untitled);
   const sections = event.sections.filter((s) => s.enabled);
 
   return (
@@ -46,7 +51,7 @@ export function EventPage({
       <main className={`relative mx-auto w-full max-w-[690px] px-4 pb-24 text-center @xl:px-6 ${contained ? "pt-8" : "pt-10 @3xl:pt-14"}`}>
         <header>
           <p className="text-xs font-extrabold tracking-[0.24em] text-(--ev-muted) uppercase">
-            You&rsquo;re invited{date && ` · ${date.long}`}
+            {t.event.invited}{date && ` · ${date.long}`}
           </p>
           {event.badge && (
             <p className="mt-6 inline-block -rotate-3 rounded-full bg-(--ev-ink) px-4 py-2 text-xs font-extrabold tracking-[0.13em] text-(--ev-on-ink) uppercase">
@@ -76,7 +81,7 @@ export function EventPage({
           {!sections.some((s) => s.type === "details") && rsvp}
           {sections.map((s) => (
             <Fragment key={s.id}>
-              <SectionView section={s} event={event} summary={summary} />
+              <SectionView section={s} event={event} summary={summary} t={t} />
               {s.type === "details" && rsvp}
             </Fragment>
           ))}

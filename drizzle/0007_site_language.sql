@@ -1,0 +1,2 @@
+ALTER TABLE "site_settings" ADD COLUMN "language" text DEFAULT 'en' NOT NULL;--> statement-breakpoint
+ALTER TABLE "site_settings" ADD CONSTRAINT "site_settings_language" CHECK ("site_settings"."language" in ('en', 'es'));
