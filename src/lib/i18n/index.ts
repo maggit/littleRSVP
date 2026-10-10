@@ -22,3 +22,8 @@ export function isLang(value: unknown): value is Lang {
 export function getDict(lang: string): Dict {
   return isLang(lang) ? DICTS[lang] : en;
 }
+
+/** True for a page link generated for a new party (e.g. party-k3x9qa or fiesta-k3x9qa), in any language. */
+export function isAutoSlug(slug: string) {
+  return LANGS.some((l) => new RegExp(`^${DICTS[l].defaults.slugPrefix}-[a-z0-9]{6}$`).test(slug));
+}

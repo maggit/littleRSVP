@@ -6,7 +6,7 @@ import { deleteEvent, duplicateEvent, saveEvent, type EventInput } from "@/app/a
 import { EventPage } from "@/components/event/EventPage";
 import { RsvpCard } from "@/components/event/RsvpCard";
 import { hasEnded, rsvpClosedReason, type EventView, type GuestSummary } from "@/lib/event";
-import { getDict, type Lang } from "@/lib/i18n";
+import { getDict, isAutoSlug, type Lang } from "@/lib/i18n";
 import { newSection, SECTION_TYPES, type Section, type SectionType } from "@/lib/sections";
 import { EFFECTS, THEMES, type ThemeKey } from "@/lib/themes";
 import { dateToZonedLocal, TIMEZONES, zonedLocalToDate } from "@/lib/time";
@@ -260,7 +260,7 @@ export function EventEditor({ id, event, summary, origin, lang }: { id: string; 
                   value={state.title}
                   onChange={(e) => {
                     const title = e.target.value;
-                    setState((s) => ({ ...s, title, slug: slugFromTitle || s.slug.startsWith("party-") ? slugify(title) || s.slug : s.slug }));
+                    setState((s) => ({ ...s, title, slug: slugFromTitle || isAutoSlug(s.slug) ? slugify(title) || s.slug : s.slug }));
                   }}
                   className="text-lg font-semibold"
                 />

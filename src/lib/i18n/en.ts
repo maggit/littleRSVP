@@ -84,6 +84,8 @@ export const en = {
   /** Starting copy for new parties and sections. Saved into the event, so editing it later is up to the host. */
   defaults: {
     title: "Birthday Party",
+    /** Start of the page link for new parties, e.g. /e/party-k3x9qa. */
+    slugPrefix: "party",
     subtitle: "Come celebrate with us! There will be cake, games, and lots of giggles.",
     notePrompt: "Allergies, or a note for the birthday kid?",
     labels: { going: "Going", maybe: "Maybe", no: "Can't go" },
@@ -141,6 +143,12 @@ export const en = {
     failed: "Sign-in didn’t work. Try again?",
     google: "Continue with Google",
     dev: "Dev login (local only)",
+  },
+
+  notFound: {
+    title: "Page not found",
+    body: "This link doesn't go anywhere. It may have a typo, or the party may have been removed. Check with whoever sent it to you.",
+    home: "Go to the home page",
   },
 
   notAllowed: {
@@ -334,6 +342,7 @@ export const en = {
     imageType: "Use a JPG, PNG, WebP or GIF.",
     imageSize: "That image is over 5 MB.",
     imageUnreadable: "We couldn't read that image.",
+    inSection: (n: number) => `(section ${n})`,
   },
 
   settings: {

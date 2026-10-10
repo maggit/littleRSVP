@@ -28,7 +28,7 @@ export async function createEvent() {
   const [row] = await db
     .insert(events)
     .values({
-      slug: `party-${nanoid(6).toLowerCase().replace(/[^a-z0-9]/g, "x")}`,
+      slug: `${t.defaults.slugPrefix}-${nanoid(6).toLowerCase().replace(/[^a-z0-9]/g, "x")}`,
       title: t.defaults.title,
       subtitle: t.defaults.subtitle,
       hostedBy: "",
@@ -88,7 +88,10 @@ export async function saveEvent(id: string, input: EventInput): Promise<SaveResu
   const parsed = eventInput(t).safeParse(input, zodErrors(lang));
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
-    return { ok: false, error: issue ? `${issue.message}${issue.path.length ? ` (${issue.path.join(".")})` : ""}` : t.errors.invalid };
+    if (!issue) return { ok: false, error: t.errors.invalid };
+    // Top-level messages already name their field; for sections, say which one (1-based).
+    const section = issue.path[0] === "sections" && typeof issue.path[1] === "number" ? ` ${t.errors.inSection(issue.path[1] + 1)}` : "";
+    return { ok: false, error: `${issue.message}${section}` };
   }
   const d = parsed.data;
   const startsAt = d.startsLocal ? zonedLocalToDate(d.startsLocal, d.timezone) : null;

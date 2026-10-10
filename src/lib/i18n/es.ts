@@ -40,7 +40,7 @@ export const es: Dict = {
   },
 
   rsvp: {
-    headline: { going: "¡Vienes a la fiesta!", maybe: "Tal vez vengas", no: "Esta vez no puedes venir" },
+    headline: { going: "¡Vienes a la fiesta!", maybe: "Tal vez vengas", no: "No podrás venir" },
     partySize: (adults, kids) => `${plural(adults, "adulto", "adultos")}${kids ? `, ${plural(kids, "niño", "niños")}` : ""}`,
     change: "Cambiar respuesta",
     title: "Confirmación",
@@ -79,9 +79,10 @@ export const es: Dict = {
 
   defaults: {
     title: "Fiesta de cumpleaños",
-    subtitle: "¡Ven a celebrar con nosotros! Habrá pastel, juegos y muchas risas.",
+    slugPrefix: "fiesta",
+    subtitle: "¡Ven a celebrar con nosotros! Habrá piñata, juegos y muchas risas.",
     notePrompt: "¿Alergias o un mensaje para quien cumple años?",
-    labels: { going: "Voy", maybe: "Tal vez", no: "No puedo ir" },
+    labels: { going: "Voy", maybe: "Tal vez", no: "No puedo" },
     callout: "Vestimenta",
     schedule: "Programa",
     links: "Enlaces",
@@ -138,6 +139,12 @@ export const es: Dict = {
     dev: "Acceso de desarrollo (solo local)",
   },
 
+  notFound: {
+    title: "Página no encontrada",
+    body: "Este enlace no lleva a ninguna parte. Puede que tenga un error o que la fiesta se haya eliminado. Consulta con quien te lo envió.",
+    home: "Ir a la página de inicio",
+  },
+
   notAllowed: {
     title: "Sin acceso",
     body: "Esta zona es solo para quienes organizan la fiesta. No se inició ninguna sesión.",
@@ -160,7 +167,7 @@ export const es: Dict = {
     responses: (n) => plural(n, "respuesta", "respuestas"),
     rsvps: "Respuestas",
     view: "Ver",
-    deactivate: "Marcar inactiva",
+    deactivate: "Marcar como inactiva",
     reactivate: "Reactivar",
   },
 
@@ -272,7 +279,7 @@ export const es: Dict = {
     contactRequiredHint: "Los invitados no pueden responder “voy” o “tal vez” sin al menos uno.",
     askNote: "Dejar que los invitados escriban una nota",
     notePrompt: "Pregunta para la nota",
-    deadline: "Responder antes de",
+    deadline: "Fecha límite para responder",
     deadlineHint: "Opcional. Las respuestas se cierran después de esta hora.",
     buttonLabels: "Textos de los botones",
     buttonEmoji: (label) => `Emoji para “${label}”`,
@@ -301,7 +308,7 @@ export const es: Dict = {
     time: "Hora",
     timePlaceholder: "15:00",
     what: "Qué pasa",
-    whatPlaceholder: "¡Pastel!",
+    whatPlaceholder: "¡Piñata!",
     addLink: "Agregar un enlace",
     label: "Texto",
     labelPlaceholder: "Lista de deseos",
@@ -328,6 +335,7 @@ export const es: Dict = {
     noFile: "Falta el archivo",
     imageType: "Usa un JPG, PNG, WebP o GIF.",
     imageSize: "Esa imagen pesa más de 5 MB.",
+    inSection: (n) => `(sección ${n})`,
     imageUnreadable: "No pudimos leer esa imagen.",
   },
 
