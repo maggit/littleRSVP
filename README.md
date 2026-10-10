@@ -11,6 +11,33 @@ everything lives in one Postgres database that you own.
 **Stack:** Next.js 16 (standalone output) · Postgres + Drizzle · Auth.js v5 (Google) · Tailwind v4.
 Cover photos and link-preview images are stored in Postgres, so the app container is stateless.
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/party-page.png" alt="A party page: “Theo turns 3!” with a dinosaur cover, confetti, and the invite text" width="100%">
+</p>
+
+<table>
+  <tr>
+    <td width="33%"><img src="docs/screenshots/party-page-mobile.png" alt="The party page on a phone"></td>
+    <td width="33%"><img src="docs/screenshots/party-rsvp-mobile.png" alt="Event details and the RSVP buttons: Going, Maybe, Can't go"></td>
+    <td width="33%"><img src="docs/screenshots/landing.png" alt="The landing page showing a child's name and a smiling cloud"></td>
+  </tr>
+  <tr>
+    <td align="center">Party page on a phone</td>
+    <td align="center">Details and RSVP</td>
+    <td align="center">Landing page (name set in Settings)</td>
+  </tr>
+</table>
+
+**Admin**
+
+| Event editor with live preview | Guest list |
+| --- | --- |
+| ![Event editor: form fields on the left, live preview of the party page on the right](docs/screenshots/admin-editor.png) | ![RSVP list with counts for going, adults, kids, maybe and can't go](docs/screenshots/admin-rsvps.png) |
+| **Parties dashboard** | **Settings** |
+| ![Dashboard listing parties with RSVP counts](docs/screenshots/admin-dashboard.png) | ![Settings page for the landing page name, description and footer](docs/screenshots/admin-settings.png) |
+
 ## Features
 
 - **Sections.** Every party page is a list of sections you can reorder, hide, or add:
@@ -25,10 +52,12 @@ Cover photos and link-preview images are stored in Postgres, so the app containe
 - **RSVPs.** Guests answer Going, Maybe, or Can't go, with an optional count of adults and kids,
   a phone number or email, and a note. Guests can change their answer later (a cookie remembers
   them). You can set a spot limit and an RSVP deadline. Spot limits are enforced atomically, so
-  two guests can't both take the last spot. Any guest list can be exported as CSV.
+  two guests can't both take the last spot. New RSVPs are rate-limited per connection to keep
+  bots from filling a party. Any guest list can be exported as CSV.
 - **Add to calendar.** Every party has an `.ics` download.
 - **Private by default.** Party pages are `noindex`. The admin uses JWT sessions with no user
-  table, and only allowlisted Google accounts can sign in.
+  table, and only allowlisted Google accounts can sign in. Uploaded photos are re-encoded on the
+  server, which strips location data and other metadata.
 
 ## Quick start (local)
 
@@ -36,14 +65,14 @@ Requirements: Node.js 20.9+ (24 recommended) and Docker (for the local Postgres)
 
 ```bash
 git clone <this-repo> littlersvp && cd littlersvp
-cp .env.example .env.local   # set AUTH_SECRET and DEV_LOGIN_EMAIL, and add that email to ADMIN_EMAILS
+cp .env.example .env.local   # set AUTH_SECRET; uncomment DEV_LOGIN_EMAIL and add it to ADMIN_EMAILS
 npm install
 npm run db:up                # Postgres in Docker on port 5434 (user/password/db: littlersvp)
 npm run dev
 ```
 
 Open <http://localhost:3000/admin>. With `DEV_LOGIN_EMAIL` set, a **Dev login** button lets you
-in without Google credentials. This only works under `next dev`.
+in without Google credentials. It only works under `next dev`, and only from `localhost`.
 
 Migrations run automatically when the server starts. After you change `src/db/schema.ts`, run
 `npm run db:generate` to create a new migration in `drizzle/`, then commit it.
@@ -71,7 +100,7 @@ All configuration is through environment variables. See [`.env.example`](.env.ex
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | yes (prod) | Google OAuth client credentials |
 | `AUTH_URL` | prod | Public URL of the site, e.g. `https://rsvp.example.com`. Also used for absolute share links |
 | `ADMIN_EMAILS` | yes | Comma-separated Google accounts allowed into `/admin` |
-| `DEV_LOGIN_EMAIL` | no | Local only: enables a password-less Dev login as this email. Ignored in production builds |
+| `DEV_LOGIN_EMAIL` | no | Local only: enables a password-less Dev login as this email, from `localhost` only. Ignored in production builds |
 | `DATABASE_SSL` | no | Set to `require` to force TLS when your provider's URL lacks `sslmode` (Heroku) |
 | `SKIP_MIGRATIONS` | no | Set to `1` to skip running migrations on boot |
 | `MIGRATIONS_DIR` | no | Override the migrations folder (default `./drizzle`) |
