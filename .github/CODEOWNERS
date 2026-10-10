@@ -1,0 +1,4 @@
+# Every change needs approval from a code owner before it can merge into main.
+# To add a maintainer: give them Write (or Maintain) access to the repo, then add their
+# @handle here and to MAINTAINERS.md in the same PR. See MAINTAINERS.md.
+* @maggit

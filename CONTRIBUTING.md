@@ -49,6 +49,13 @@ variables.
 Open an issue with what you expected, what happened, and steps to reproduce. For a feature idea,
 describe the party-hosting problem it solves. That makes it easier to keep the app small.
 
+## Review process
+
+All changes go through pull requests into `main`. CI (lint, type-check, build, and a Docker
+build) must pass, and a [maintainer](MAINTAINERS.md) must approve the PR before it can merge.
+PRs are squash-merged, so write a clear PR title. Please follow the
+[Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).

@@ -185,7 +185,9 @@ drizzle/                   SQL migrations (committed)
 ## Contributing
 
 Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
-To report a security issue, see [SECURITY.md](SECURITY.md).
+Every pull request is reviewed and approved by a [maintainer](MAINTAINERS.md) before it merges.
+Please follow the [Code of Conduct](CODE_OF_CONDUCT.md). To report a security issue, see
+[SECURITY.md](SECURITY.md).
 
 ## License
 
