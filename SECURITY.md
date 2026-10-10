@@ -18,9 +18,10 @@ We'll acknowledge the report as soon as we can and keep you updated while it's f
 - `DEV_LOGIN_EMAIL` only works under `next dev` and only from `localhost`. Never run the dev
   server on a public host.
 - Set `AUTH_URL` in production. Without it, absolute links are built from request headers.
-- New RSVPs are rate-limited per client IP, using the last `X-Forwarded-For` hop. That assumes
-  exactly one reverse proxy in front of the app (the usual setup on Dokploy, Railway, Heroku and
-  App Platform). The limiter is in memory, so it resets on restart and isn't shared between
+- New RSVPs are rate-limited per client IP. Behind Cloudflare, that's `CF-Connecting-IP`. Otherwise
+  it's the last `X-Forwarded-For` hop, which assumes exactly one reverse proxy in front of the app
+  (the usual setup on Dokploy, Railway, Heroku and App Platform). If you use Cloudflare, make sure
+  your origin only accepts traffic from Cloudflare, or the header can be spoofed. The limiter is in memory, so it resets on restart and isn't shared between
   replicas.
 - Keep `AUTH_SECRET` secret. Rotating it signs everyone out.
 - The database holds all guest data (names, contact info, notes) and uploaded photos.

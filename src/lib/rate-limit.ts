@@ -22,12 +22,14 @@ export function allow(key: string, limit: number, windowMs: number) {
 }
 
 /**
- * Best-effort client IP. Uses the last X-Forwarded-For hop: that's the one added by the reverse
- * proxy in front of the app (Traefik, Heroku, Railway…), so clients can't spoof it by sending
- * their own header.
+ * Best-effort client IP. Behind Cloudflare, every request arrives from a Cloudflare edge, so use
+ * the visitor IP it reports. Otherwise use the last X-Forwarded-For hop: that's the one added by
+ * the reverse proxy in front of the app (Traefik, Heroku, Railway…), so clients can't spoof it.
  */
 export async function clientIp() {
   const h = await headers();
+  const cf = h.get("cf-connecting-ip");
+  if (cf) return cf;
   const xff = h.get("x-forwarded-for")?.split(",").map((s) => s.trim()).filter(Boolean);
   return xff?.at(-1) ?? h.get("x-real-ip") ?? "unknown";
 }
