@@ -50,6 +50,13 @@
       "when": 1791650495512,
       "tag": "0006_site_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791651627290,
+      "tag": "0007_site_language",
+      "breakpoints": true
     }
   ]
 }

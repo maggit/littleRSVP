@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { mapsUrl, type EventView, type GuestSummary } from "@/lib/event";
+import type { Dict } from "@/lib/i18n";
 import type { Section } from "@/lib/sections";
 import { formatEventDate } from "@/lib/time";
 import { CalendarIcon, CrownIcon, PeopleIcon, PinIcon } from "./Icons";
@@ -61,10 +62,10 @@ function googleCalendarUrl(event: EventView) {
   return `https://calendar.google.com/calendar/render?${params}`;
 }
 
-function Details({ event, summary }: { event: EventView; summary: GuestSummary }) {
+function Details({ event, summary, t }: { event: EventView; summary: GuestSummary; t: Dict }) {
   const maps = mapsUrl(event);
   const spotsTaken = summary.adults + summary.kids;
-  const date = formatEventDate(event.startsAt, event.endsAt, event.timezone);
+  const date = formatEventDate(event.startsAt, event.endsAt, event.timezone, t.locale);
   const gcal = googleCalendarUrl(event);
   const rows: ReactNode[] = [];
   rows.push(
@@ -74,12 +75,12 @@ function Details({ event, summary }: { event: EventView; summary: GuestSummary }
           <p className="ev-heading text-xl">{date.day}</p>
           <p className="text-(--ev-muted)">{date.times}</p>
           <p className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-            <a href={`/e/${event.slug}/calendar.ics`} className="ev-link">Add to calendar</a>
-            {gcal && <a href={gcal} target="_blank" rel="noreferrer" className="ev-link">Google Calendar</a>}
+            <a href={`/e/${event.slug}/calendar.ics`} className="ev-link">{t.event.addToCalendar}</a>
+            {gcal && <a href={gcal} target="_blank" rel="noreferrer" className="ev-link">{t.event.googleCalendar}</a>}
           </p>
         </>
       ) : (
-        <p className="ev-heading text-xl">Date coming soon</p>
+        <p className="ev-heading text-xl">{t.event.dateSoon}</p>
       )}
     </DetailRow>,
   );
@@ -90,7 +91,7 @@ function Details({ event, summary }: { event: EventView; summary: GuestSummary }
         {event.locationName && event.locationAddress && <p className="whitespace-pre-line text-(--ev-muted)">{event.locationAddress}</p>}
         {maps && (
           <a href={maps} target="_blank" rel="noreferrer" className="ev-link mt-1 inline-block text-sm">
-            Open in Maps
+            {t.event.openInMaps}
           </a>
         )}
       </DetailRow>,
@@ -99,7 +100,7 @@ function Details({ event, summary }: { event: EventView; summary: GuestSummary }
   if (event.hostedBy) {
     rows.push(
       <DetailRow key="host" icon={<CrownIcon />}>
-        <p className="ev-heading text-xl">Hosted by {event.hostedBy}</p>
+        <p className="ev-heading text-xl">{t.event.hostedBy(event.hostedBy)}</p>
       </DetailRow>,
     );
   }
@@ -107,7 +108,7 @@ function Details({ event, summary }: { event: EventView; summary: GuestSummary }
     const left = Math.max(0, event.capacity - spotsTaken);
     rows.push(
       <DetailRow key="cap" icon={<PeopleIcon />}>
-        <p className="font-semibold">{left === 0 ? "All spots are taken" : `${left} of ${event.capacity} spots left`}</p>
+        <p className="font-semibold">{left === 0 ? t.event.allSpotsTaken : t.event.spotsLeft(left, event.capacity)}</p>
       </DetailRow>,
     );
   }
@@ -121,16 +122,16 @@ function Details({ event, summary }: { event: EventView; summary: GuestSummary }
   );
 }
 
-function Guests({ title, summary }: { title: string; summary: GuestSummary }) {
+function Guests({ title, summary, t }: { title: string; summary: GuestSummary; t: Dict }) {
   const counts = [
-    summary.going && `${summary.going} going`,
-    summary.maybe && `${summary.maybe} maybe`,
+    summary.going && t.event.going(summary.going),
+    summary.maybe && t.event.maybe(summary.maybe),
   ].filter(Boolean);
   return (
     <Panel>
       <Heading>{title}</Heading>
       {summary.going === 0 ? (
-        <p className="text-(--ev-muted)">Be the first to RSVP!</p>
+        <p className="text-(--ev-muted)">{t.event.beFirst}</p>
       ) : (
         <>
           <p className="mb-4 text-sm text-(--ev-muted)">{counts.join(" · ")}</p>
@@ -150,10 +151,10 @@ function Guests({ title, summary }: { title: string; summary: GuestSummary }) {
   );
 }
 
-export function SectionView({ section, event, summary }: { section: Section; event: EventView; summary: GuestSummary }) {
+export function SectionView({ section, event, summary, t }: { section: Section; event: EventView; summary: GuestSummary; t: Dict }) {
   switch (section.type) {
     case "details":
-      return <Details event={event} summary={summary} />;
+      return <Details event={event} summary={summary} t={t} />;
     case "text":
       if (!section.title && !section.body.trim()) return null;
       return (
@@ -235,6 +236,6 @@ export function SectionView({ section, event, summary }: { section: Section; eve
       );
     }
     case "guests":
-      return <Guests title={section.title} summary={summary} />;
+      return <Guests title={section.title} summary={summary} t={t} />;
   }
 }

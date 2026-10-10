@@ -8,6 +8,8 @@ import { z } from "zod";
 import { db } from "@/db";
 import { rsvps } from "@/db/schema";
 import { MAX_GUESTS_PER_KIND, rsvpClosedReason, rsvpCookieName, toView } from "@/lib/event";
+import type { Dict } from "@/lib/i18n";
+import { getI18n, zodErrors } from "@/lib/i18n/server";
 import { getEventBySlug } from "@/lib/queries";
 import { allow, clientIp } from "@/lib/rate-limit";
 
@@ -20,40 +22,41 @@ const NEW_PER_SITE = { limit: 20, windowMs: 60 * 60_000 };
 
 const count = z.coerce.number().int().min(0).max(MAX_GUESTS_PER_KIND);
 
-const input = z.object({
+const input = (t: Dict) => z.object({
   slug: z.string().max(100),
-  name: z.string().trim().min(1, "Please tell us your name.").max(80),
+  name: z.string().trim().min(1, t.rsvpErrors.name).max(80),
   status: z.enum(["going", "maybe", "no"]),
   adults: count.default(1),
   kids: count.default(0),
-  email: z.string().trim().max(200).regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "That email doesn't look right.").or(z.literal("")).default(""),
+  email: z.string().trim().max(200).regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, t.rsvpErrors.email).or(z.literal("")).default(""),
   phone: z.string().trim().max(40).default(""),
   note: z.string().trim().max(1000).default(""),
   website: z.string().max(0).optional(), // honeypot
 });
 
 export async function submitRsvp(_prev: RsvpState, formData: FormData): Promise<RsvpState> {
+  const { lang, t } = await getI18n();
   const raw = Object.fromEntries([...formData.entries()].filter(([, v]) => v !== ""));
-  const parsed = input.safeParse(raw);
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Something looks off." };
+  const parsed = input(t).safeParse(raw, zodErrors(lang));
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? t.rsvpErrors.generic };
   const data = parsed.data;
 
   const row = await getEventBySlug(data.slug);
-  if (!row) return { ok: false, error: "We couldn't find this party." };
+  if (!row) return { ok: false, error: t.rsvpErrors.notFound };
   const event = toView(row);
-  const closed = rsvpClosedReason(event);
+  const closed = rsvpClosedReason(event, t);
   if (closed) return { ok: false, error: closed };
 
   const s = event.rsvpSettings;
   const adults = s.askCounts && data.status !== "no" ? data.adults : data.status === "no" ? 0 : 1;
   const kids = s.askCounts && data.status !== "no" ? data.kids : 0;
-  if (data.status !== "no" && adults + kids === 0) return { ok: false, error: "Add at least one guest." };
+  if (data.status !== "no" && adults + kids === 0) return { ok: false, error: t.rsvpErrors.noGuests };
   const askContact = s.askContact && data.status !== "no";
   const email = askContact ? data.email : "";
   const phone = askContact ? data.phone : "";
-  if (phone && phone.replace(/\D/g, "").length < 7) return { ok: false, error: "That phone number doesn't look right." };
+  if (phone && phone.replace(/\D/g, "").length < 7) return { ok: false, error: t.rsvpErrors.phone };
   if (askContact && s.contactRequired && !email && !phone) {
-    return { ok: false, error: "Please add a phone number or email so we can send updates." };
+    return { ok: false, error: t.rsvpErrors.contactRequired };
   }
 
   const ip = await clientIp();
@@ -72,10 +75,10 @@ export async function submitRsvp(_prev: RsvpState, formData: FormData): Promise<
     // Backstop against bots flooding the table; real guest lists are far smaller.
     if (!existing) {
       if (!allow(`rsvp:${ip}:${event.id}`, NEW_PER_EVENT.limit, NEW_PER_EVENT.windowMs) || !allow(`rsvp:${ip}`, NEW_PER_SITE.limit, NEW_PER_SITE.windowMs)) {
-        return { error: "Too many RSVPs from this connection. Please try again in a little while." };
+        return { error: t.rsvpErrors.tooMany };
       }
       const [{ n }] = await tx.select({ n: countRows() }).from(rsvps).where(eq(rsvps.eventId, event.id));
-      if (n >= MAX_RSVPS_PER_EVENT) return { error: "This party isn't taking more RSVPs online. Please reach out to the host." };
+      if (n >= MAX_RSVPS_PER_EVENT) return { error: t.rsvpErrors.full };
     }
 
     if (data.status === "going" && event.capacity) {
@@ -86,7 +89,7 @@ export async function submitRsvp(_prev: RsvpState, formData: FormData): Promise<
       const taken = others.reduce((n, r) => n + r.adults + r.kids, 0);
       const left = event.capacity - taken;
       if (adults + kids > left) {
-        return { error: left > 0 ? `Sorry, only ${left} spot${left === 1 ? "" : "s"} left.` : "Sorry, the party is full. You can still RSVP maybe." };
+        return { error: left > 0 ? t.rsvpErrors.spotsLeft(left) : t.rsvpErrors.noSpots };
       }
     }
 

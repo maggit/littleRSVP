@@ -1,6 +1,7 @@
 // Time-zone helpers built on Intl, so the server and browser agree without a date library.
 
 function offsetMs(date: Date, timeZone: string) {
+  // Fixed locale: only the numbers are read back, never shown.
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
     hourCycle: "h23",
@@ -37,29 +38,37 @@ export function dateToZonedLocal(date: Date | string | null, timeZone: string): 
   return shifted.toISOString().slice(0, 16);
 }
 
-export function formatEventDate(start: string | null, end: string | null, timeZone: string) {
+/** Times drop a ":00" in 12-hour locales ("3 PM"), but keep it in 24-hour ones ("15:00"). */
+function formatTime(d: Date, timeZone: string, locale: string) {
+  const fmt = new Intl.DateTimeFormat(locale, { timeZone, hour: "numeric", minute: "2-digit" });
+  const twelveHour = fmt.formatToParts(d).some((p) => p.type === "dayPeriod");
+  return twelveHour ? fmt.format(d).replace(":00", "") : fmt.format(d);
+}
+
+/** `locale` is the site language's (the dictionary's `locale`), e.g. "en-US" or "es". */
+export function formatEventDate(start: string | null, end: string | null, timeZone: string, locale: string) {
   if (!start) return null;
   const s = new Date(start);
-  const day = new Intl.DateTimeFormat("en-US", {
+  const weekday = new Intl.DateTimeFormat(locale, {
     timeZone,
     weekday: "long",
     month: "long",
     day: "numeric",
   }).format(s);
-  const time = (d: Date) =>
-    new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", minute: "2-digit" })
-      .format(d)
-      .replace(":00", "");
-  const tz = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "short" })
+  // Some languages write weekdays in lowercase ("sábado"), but this one starts a line.
+  const day = weekday.charAt(0).toLocaleUpperCase(locale) + weekday.slice(1);
+  const tz = new Intl.DateTimeFormat(locale, { timeZone, timeZoneName: "short" })
     .formatToParts(s)
     .find((p) => p.type === "timeZoneName")?.value;
-  let times = time(s);
+  let times = formatTime(s, timeZone, locale);
   if (end) {
     const e = new Date(end);
     const sameDay = dateToZonedLocal(s, timeZone).slice(0, 10) === dateToZonedLocal(e, timeZone).slice(0, 10);
-    times += sameDay ? ` – ${time(e)}` : ` – ${new Intl.DateTimeFormat("en-US", { timeZone, month: "short", day: "numeric" }).format(e)}, ${time(e)}`;
+    times += sameDay
+      ? ` – ${formatTime(e, timeZone, locale)}`
+      : ` – ${new Intl.DateTimeFormat(locale, { timeZone, month: "short", day: "numeric" }).format(e)}, ${formatTime(e, timeZone, locale)}`;
   }
-  const long = new Intl.DateTimeFormat("en-US", { timeZone, month: "long", day: "numeric", year: "numeric" }).format(s);
+  const long = new Intl.DateTimeFormat(locale, { timeZone, month: "long", day: "numeric", year: "numeric" }).format(s);
   return { day, long, times: `${times}${tz ? ` ${tz}` : ""}` };
 }
 

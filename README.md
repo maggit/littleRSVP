@@ -55,6 +55,8 @@ Cover photos and link-preview images are stored in Postgres, so the app containe
   two guests can't both take the last spot. New RSVPs are rate-limited per connection to keep
   bots from filling a party. Any guest list can be exported as CSV.
 - **Add to calendar.** Every party has an `.ics` download.
+- **English or Spanish.** Pick the site's language in Settings. It applies everywhere: party
+  pages, RSVPs, dates and times, and the admin.
 - **Private by default.** Party pages are `noindex`. The admin uses JWT sessions with no user
   table, and only allowlisted Google accounts can sign in. Uploaded photos are re-encoded on the
   server, which strips location data and other metadata.
@@ -128,11 +130,23 @@ Out of the box it reads **Little RSVP**. To make it yours (for example, your chi
      line empty for a single-line name.
    - **Description**: shown in link previews and search results.
    - **Footer**: small text in the bottom corner, e.g. `Austin, Texas`. Leave it empty to hide it.
+   - **Site language**: English or Español (see [Language](#language)).
 4. Click **Save settings**. The landing page updates right away. There's no redeploy, and nothing
    to change in code or environment variables.
 
 Settings are stored in the `site_settings` table, so they survive redeploys and are included in
 your database backups.
+
+### Language
+
+The whole site speaks one language, **English** (the default) or **Spanish**. Change it under
+**Settings → Language**. It applies right away to everything the app writes: the landing page,
+party pages, the RSVP card and its messages, dates and times, `.ics` downloads, CSV exports, link
+previews, and the admin.
+
+Text you typed into a party yourself (its title, intro, sections, and the RSVP button labels and
+note prompt saved with it) is yours, so it isn't translated automatically. Edit it in the party
+editor if you switch languages. New parties start with their sample text in the current language.
 
 Going further (for forks):
 
@@ -174,6 +188,7 @@ src/
     admin/                 event + section editors
   db/                      Drizzle schema, client, migration runner
   lib/                     themes, fonts, sections, images, settings, queries, time helpers
+    i18n/                  English and Spanish dictionaries + getI18n()
   auth.ts                  Auth.js config + admin allowlist
   instrumentation.ts       runs migrations on server start
 drizzle/                   SQL migrations (committed)

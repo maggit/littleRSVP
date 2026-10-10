@@ -1,8 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { redirect } from "next/navigation";
 import { auth, devLoginEnabled, isAdminEmail, NOT_ALLOWED_PATH, signIn } from "@/auth";
+import { getI18n } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Sign in", robots: { index: false } };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.meta.signIn, robots: { index: false } };
+}
+
 export const viewport: Viewport = { themeColor: "#a9b4ed" };
 
 export default async function Login({ searchParams }: PageProps<"/admin/login">) {
@@ -10,15 +15,16 @@ export default async function Login({ searchParams }: PageProps<"/admin/login">)
   if (isAdminEmail(session?.user?.email)) redirect("/admin");
   const { error } = await searchParams;
   if (error === "AccessDenied") redirect(NOT_ALLOWED_PATH);
+  const { t } = await getI18n();
 
   return (
     <main className="grid min-h-dvh place-items-center bg-sky-page px-4">
       <div className="w-full max-w-sm rounded-[2rem] border border-line bg-white/70 p-8 text-center shadow-[0_30px_80px_-50px_rgb(0_0_0/0.5)] backdrop-blur-md">
         <p className="font-display text-4xl [font-variation-settings:'SOFT'_100,'WONK'_1]">Little RSVP</p>
-        <p className="mt-2 text-ink-soft">Party headquarters</p>
+        <p className="mt-2 text-ink-soft">{t.login.tagline}</p>
         {error && (
           <p role="alert" className="mt-5 rounded-2xl bg-rose/10 px-4 py-3 text-sm font-medium text-rose-deep">
-            Sign-in didn&rsquo;t work. Try again?
+            {t.login.failed}
           </p>
         )}
         <form
@@ -35,7 +41,7 @@ export default async function Login({ searchParams }: PageProps<"/admin/login">)
               <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />
               <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.5z" />
             </svg>
-            Continue with Google
+            {t.login.google}
           </button>
         </form>
         {devLoginEnabled && (
@@ -47,7 +53,7 @@ export default async function Login({ searchParams }: PageProps<"/admin/login">)
             }}
           >
             <button className="w-full rounded-full border border-line px-5 py-2.5 text-sm font-semibold text-ink-soft hover:bg-paper-2">
-              Dev login (local only)
+              {t.login.dev}
             </button>
           </form>
         )}
