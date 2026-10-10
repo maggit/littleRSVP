@@ -1,0 +1,200 @@
+@import "tailwindcss";
+
+:root {
+  /* House palette (landing + admin) */
+  --paper: oklch(97.5% 0.017 75);
+  --paper-2: oklch(94.5% 0.022 60);
+  --ink: oklch(31% 0.075 350);
+  --ink-soft: oklch(47% 0.05 350);
+  --rose: oklch(66% 0.15 8);
+  --rose-deep: oklch(56% 0.16 8);
+  --butter: oklch(95% 0.06 95);
+  --line: oklch(31% 0.075 350 / 0.12);
+  --focus: oklch(56% 0.16 8);
+  --sky: #a9b4ed; /* landing page sky, also behind admin */
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-rose: var(--rose);
+  --color-rose-deep: var(--rose-deep);
+  --color-line: var(--line);
+  --color-butter: var(--butter);
+  --color-sky-page: var(--sky);
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-figtree);
+}
+
+html,
+body {
+  overflow-x: clip;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-figtree), system-ui, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ───────────── Event pages ───────────── */
+
+.ev-root {
+  background: var(--ev-bg);
+  font-family: var(--font-figtree), system-ui, sans-serif;
+  --focus: var(--ev-accent);
+}
+
+.ev-title {
+  font-family: var(--ev-title-font);
+  font-variation-settings: var(--ev-title-settings);
+  font-weight: var(--ev-title-weight);
+  letter-spacing: var(--ev-title-tracking);
+  overflow-wrap: anywhere;
+  min-width: 0;
+  text-wrap: balance;
+}
+
+.ev-title-accent {
+  color: var(--ev-accent);
+  text-shadow: var(--ev-title-shadow);
+}
+
+.ev-tagline {
+  font-family: var(--ev-title-font);
+  font-variation-settings: var(--ev-title-settings);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ev-accent-2);
+  text-wrap: balance;
+}
+
+.ev-heading {
+  font-family: var(--font-fraunces), serif;
+  font-variation-settings: "SOFT" 100, "WONK" 0;
+  font-weight: 560;
+  letter-spacing: -0.01em;
+}
+
+.ev-link {
+  color: var(--ev-accent);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+.ev-link:hover { text-decoration-thickness: 2.5px; }
+
+.ev-chip { transition: background-color 200ms var(--ease-out); }
+.ev-chip:hover { background: color-mix(in oklch, var(--ev-accent) 14%, transparent); }
+
+.ev-choice {
+  background: color-mix(in oklch, var(--ev-ink) 4%, transparent);
+  transition: background-color 200ms var(--ease-out), border-color 200ms var(--ease-out), transform 150ms var(--ease-out);
+}
+.ev-choice:hover { background: color-mix(in oklch, var(--ev-accent) 12%, transparent); }
+.ev-choice:active { transform: scale(0.97); }
+.ev-choice[aria-checked="true"] {
+  background: color-mix(in oklch, var(--ev-accent) 22%, transparent);
+  border-color: var(--ev-accent);
+  box-shadow: 0 0 0 2px var(--ev-accent) inset;
+}
+
+.ev-input {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid var(--ev-line);
+  background: color-mix(in oklch, var(--ev-ink) 4%, transparent);
+  padding: 0.75rem 1rem;
+  color: var(--ev-ink);
+  font-size: 1rem;
+}
+.ev-input::placeholder { color: var(--ev-muted); opacity: 0.8; }
+.ev-input:focus-visible { outline: 2px solid var(--ev-accent); outline-offset: 0; }
+
+.ev-step {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid var(--ev-line);
+  font-size: 1.15rem;
+  line-height: 1;
+}
+.ev-step:hover:not(:disabled) { background: color-mix(in oklch, var(--ev-accent) 14%, transparent); }
+.ev-step:disabled { opacity: 0.35; }
+
+.ev-button {
+  border-radius: 999px;
+  background: var(--ev-accent);
+  color: var(--ev-accent-ink);
+  padding: 0.85rem 1.25rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+  transition: filter 200ms var(--ease-out), transform 150ms var(--ease-out);
+}
+.ev-button:hover:not(:disabled) { filter: brightness(1.06); }
+.ev-button:active:not(:disabled) { transform: translateY(1px); }
+.ev-button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.cover-emoji { filter: drop-shadow(0 18px 30px rgb(0 0 0 / 0.18)); animation: bob 5s var(--ease-in-out) infinite alternate; }
+@keyframes bob { to { transform: translateY(-10px) rotate(-3deg); } }
+
+/* Sprinkles: floating decoration layer */
+.sprinkle {
+  position: absolute;
+  display: block;
+  width: var(--size);
+  height: var(--size);
+  will-change: transform;
+}
+.sprinkle-confetti,
+.sprinkle-petals {
+  top: -5%;
+  background: var(--c);
+  animation: fall var(--dur) linear var(--delay) infinite;
+}
+.sprinkle-confetti { height: calc(var(--size) * 0.45); border-radius: 2px; opacity: 0.85; }
+.sprinkle-petals { border-radius: 70% 0 70% 0; opacity: 0.7; }
+.sprinkle-bubbles {
+  top: 105%;
+  border-radius: 50%;
+  border: 1.5px solid var(--c);
+  background: radial-gradient(circle at 30% 30%, color-mix(in oklch, var(--c) 60%, transparent), transparent 60%);
+  animation: rise-up calc(var(--dur) * 1.3) linear var(--delay) infinite;
+}
+.sprinkle-hearts { top: 105%; animation: rise-up calc(var(--dur) * 1.4) linear var(--delay) infinite; }
+.sprinkle-hearts::before { content: "♥"; color: var(--c); font-size: calc(var(--size) * 1.6); line-height: 1; opacity: 0.7; }
+.sprinkle-stars { animation: twinkle var(--dur) var(--ease-in-out) var(--delay) infinite; }
+.sprinkle-stars::before { content: "✦"; color: var(--c); font-size: var(--size); line-height: 1; }
+
+@keyframes fall {
+  from { transform: translate3d(0, 0, 0) rotate(0); }
+  to { transform: translate3d(var(--sway), 115vh, 0) rotate(var(--spin)); }
+}
+@keyframes rise-up {
+  from { transform: translate3d(0, 0, 0); opacity: 0; }
+  10% { opacity: 1; }
+  to { transform: translate3d(var(--sway), -120vh, 0); opacity: 0; }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.6); }
+  50% { opacity: 0.75; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cover-emoji { animation: none; }
+  .sprinkle { animation: none; opacity: 0.35; }
+  .sprinkle-confetti, .sprinkle-petals, .sprinkle-bubbles, .sprinkle-hearts { top: auto; bottom: calc(var(--size) * 3); }
+}

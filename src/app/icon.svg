@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="16 -34 360 360">
+  <path d="M72 192C34 190 20 160 32 134c10-22 31-29 53-25C77 70 106 43 141 48c19 2 33 12 42 26 16-39 65-48 94-20 13 12 18 26 18 39 32-8 66 14 68 47 2 26-15 46-38 51-5 37-36 64-74 64H139c-37 0-65-23-67-63Z" fill="#fff7dc" stroke="#242048" stroke-width="12" stroke-linejoin="round"/>
+  <ellipse cx="120" cy="169" rx="26" ry="16" fill="#f58db9" opacity=".75"/>
+  <ellipse cx="284" cy="169" rx="26" ry="16" fill="#f58db9" opacity=".75"/>
+  <ellipse cx="159" cy="149" rx="10" ry="15" fill="#242048"/>
+  <ellipse cx="242" cy="149" rx="10" ry="15" fill="#242048"/>
+  <path d="M182 172q18 22 36 0" fill="none" stroke="#242048" stroke-width="9" stroke-linecap="round"/>
+</svg>

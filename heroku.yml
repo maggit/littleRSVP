@@ -1,0 +1,4 @@
+# Heroku container deploys: `heroku stack:set container`, then push. See README → Deploying.
+build:
+  docker:
+    web: Dockerfile

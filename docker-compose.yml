@@ -1,0 +1,14 @@
+# Local development database. Production uses a Dokploy Postgres service instead.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: littlersvp
+      POSTGRES_PASSWORD: littlersvp
+      POSTGRES_DB: littlersvp
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - littlersvp-pgdata:/var/lib/postgresql/data
+volumes:
+  littlersvp-pgdata:

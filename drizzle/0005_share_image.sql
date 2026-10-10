@@ -1,0 +1,1 @@
+ALTER TABLE "events" ADD COLUMN "share_image_id" uuid;
